@@ -16,7 +16,6 @@ dotenv.config();
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-
 // 4. DEFINE FUNCTIONS
 // Function to generate Access Token
 function generateAccessToken(username) {
@@ -42,8 +41,7 @@ app.post('/api/createNewUser', (req, res) => {
 });
 
 // Set the port; default to 3000
-const PORT = process.env.PORT || 3000;
-
+const port = process.env.PORT || 3000;
 // Start the server
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
