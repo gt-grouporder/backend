@@ -5,6 +5,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
 const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
 
 const app = express();
 
@@ -15,6 +16,7 @@ dotenv.config();
 // Middleware to parse JSON
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 // 4. DEFINE FUNCTIONS
 // Function to generate Access Token
@@ -25,20 +27,18 @@ function generateAccessToken(username) {
 
 // Function to authenticate Aceess Token
 function authenticateToken(req, res, next) {
-  const authHeader = req.headers['authorization']
-  const token = authHeader && authHeader.split(' ')[1]
+  const authHeader = req.headers['authorization'];
+  // Attempt token retrieval from authorization header. Otherwise, try from cookie.
+  const token = (authHeader && authHeader.split(' ')[1]) || req.cookies.token;
 
-  if (token == null) return res.sendStatus(401)
+  if (token == null) return res.sendStatus(401);
 
   jwt.verify(token, process.env.TOKEN_SECRET, (err, user) => {
-    console.log(err)
-
-    if (err) return res.sendStatus(403)
-
-    req.user = user
-
-    next()
-  })
+    console.log(err);
+    if (err) return res.sendStatus(403);
+    req.user = user;
+    next();
+  });
 }
 
 // 5. DEFINE ROUTES
@@ -56,6 +56,7 @@ app.get('/hello/:name', (req, res) => {
 // Example route to create a new user. This route will return a token
 app.post('/api/createNewUser', (req, res) => {
   const token = generateAccessToken(req.body.username);
+  res.cookie('token', token, { httpOnly: true });
   res.json(token);
 });
 
