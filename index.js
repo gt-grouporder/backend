@@ -5,11 +5,14 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
 const bodyParser = require('body-parser');
+const userCollection = require('./userCollection');
 
 const app = express();
+dotenv.config();
 
 // 2. LOAD ENV VARIABLES
-dotenv.config();
+const secret_token = process.env.TOKEN_SECRET;
+const port = process.env.PORT || 3000;
 
 // 3. INITIALIZE MIDDLEWARE
 // Middleware to parse JSON
@@ -20,25 +23,22 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // Function to generate Access Token
 function generateAccessToken(username) {
   const user = { username, role: 'user' };
-  return jwt.sign(user, process.env.TOKEN_SECRET, { expiresIn: '1800s' });
+  return jwt.sign(user, secret_token, { expiresIn: '1800s' });
 }
 
 // Function to authenticate Aceess Token
 function authenticateToken(req, res, next) {
-  const authHeader = req.headers['authorization']
-  const token = authHeader && authHeader.split(' ')[1]
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
 
-  if (token == null) return res.sendStatus(401)
+  if (token == null) return res.sendStatus(401);
 
-  jwt.verify(token, process.env.TOKEN_SECRET, (err, user) => {
-    console.log(err)
-
-    if (err) return res.sendStatus(403)
-
-    req.user = user
-
-    next()
-  })
+  jwt.verify(token, secret_token, (err, user) => {
+    console.log(err);
+    if (err) return res.sendStatus(403);
+    req.user = user;
+    next();
+  });
 }
 
 // 5. DEFINE ROUTES
@@ -64,8 +64,21 @@ app.get('/api/userOrder', authenticateToken, (req, res) => {
   res.json(req.user);
 });
 
-// Set the port; default to 3000
-const port = process.env.PORT || 3000;
+// API to input user data into the database
+app.post('/api/signup', async (req, res) => {
+  const user = {
+    username: req.body.username,
+    password: req.body.password
+  };
+
+  try {
+    await userCollection.insertMany([user]);
+    res.status(201).send('User created successfully');
+  } catch (error) {
+    res.status(500).send('Error creating user');
+  }
+});
+
 // Start the server
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
