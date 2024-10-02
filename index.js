@@ -19,14 +19,9 @@ const port = process.env.PORT || 3000;
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// 4. DEFINE FUNCTIONS
-// Function to generate Access Token
-function generateAccessToken(username) {
-  const user = { username, role: 'user' };
-  return jwt.sign(user, secret_token, { expiresIn: '1800s' });
-}
-
-// Function to authenticate Aceess Token
+// 4. DEFINE CUSTOM MIDDLWARE
+// Custom Middleware to authenticate Access Token.
+// If valid, the username will be stored in req.user
 function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
@@ -41,7 +36,15 @@ function authenticateToken(req, res, next) {
   });
 }
 
-// 5. DEFINE ROUTES
+// 5. DEFINE HELPER FUNCTIONS
+// Function to generate Access Token.
+// Expires in 30 minutes.
+function generateAccessToken(username) {
+  const user = { username, role: 'user' };
+  return jwt.sign(user, secret_token, { expiresIn: '1800s' });
+}
+
+// 6. DEFINE ROUTES
 // Basic route
 app.get('/', (req, res) => {
   res.send('Hello, World!');
@@ -75,7 +78,11 @@ app.post('/api/signup', async (req, res) => {
     await userCollection.insertMany([user]);
     res.status(201).send('User created successfully');
   } catch (error) {
-    res.status(500).send('Error creating user');
+    if (error.code === 11000) {
+      res.status(409).send('Username already exists');
+    } else {
+      res.status(500).send('Internal server error');
+    }
   }
 });
 
