@@ -6,8 +6,10 @@ const dotenv = require('dotenv');
 
 dotenv.config();
 const uri = process.env.MONGODB_URI;
+const localHostURL = "mongodb://localhost:27017"
 
-mongoose.connect(uri)
+// Remember to change back to actual database later
+mongoose.connect(localHostURL)
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error(err));
 

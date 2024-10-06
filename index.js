@@ -79,6 +79,32 @@ app.post('/api/signup', async (req, res) => {
   }
 });
 
+// API to look for user data in the database
+app.post('/api/login', async (req, res) => {
+  const user = {
+    username: req.body.username,
+    password: req.body.password
+  };
+
+  let userID;
+
+  try {
+    const object = await userCollection.find({
+      username: user.username,
+      password: user.password
+      });
+    console.log(object);
+    if (object.length > 0) {
+      res.status(202).send({token: TOKEN_SECRET});
+    } else {
+      res.status(501).send('Error logging in');
+    }
+
+  } catch (error) {
+    res.status(501).send('Server side error logging in');
+  }
+});
+
 // Start the server
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
