@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
 const bodyParser = require('body-parser');
 const userCollection = require('./userCollection');
+const { ssha256, comparePassword } = require('./utils/hashing');
 
 const app = express();
 dotenv.config();
