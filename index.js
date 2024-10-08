@@ -101,7 +101,7 @@ app.post('/api/login', async (req, res) => {
     if (object.length > 0) {
       res.status(202).send({token: TOKEN_SECRET});
     } else {
-      res.status(500).send('Internal server error');
+      res.status(400).send('User does not exist');
     }
   } catch (error) {
     res.status(500).send('Internal server error');
