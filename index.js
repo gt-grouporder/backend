@@ -89,7 +89,7 @@ app.post('/api/login', async (req, res) => {
   let userID;
 
   try {
-    const object = await userCollection.find({
+    const object = await userCollection.find(user)
       username: user.username,
       password: user.password
       });
