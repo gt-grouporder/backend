@@ -89,6 +89,9 @@ app.post('/api/signup', async (req, res) => {
 });
 
 // API to look for user data in the database
+// @Carson TODO: Search by ONLY username
+// @Carson TODO: Check if password matches the hashed password using comparePassword()
+// @Carson TODO: Return a token if the user is found
 app.post('/api/login', async (req, res) => {
   const user = {
     username: req.body.username,
