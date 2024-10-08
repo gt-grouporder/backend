@@ -70,9 +70,12 @@ app.get('/api/userOrder', authenticateToken, (req, res) => {
 
 // API to input user data into the database
 app.post('/api/signup', async (req, res) => {
+  const { hash, salt, iterations } = ssha256(req.body.password);
   const user = {
     username: req.body.username,
-    password: req.body.password
+    hashedPassword: hash,
+    salt: salt,
+    iterations: iterations
   };
 
   try {
