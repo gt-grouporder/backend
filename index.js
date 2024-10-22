@@ -89,20 +89,28 @@ app.post('/api/signup', async (req, res) => {
 });
 
 // API to look for user data in the database
-// @Carson TODO: Search by ONLY username
-// @Carson TODO: Check if password matches the hashed password using comparePassword()
-// @Carson TODO: Return a token if the user is found
 app.post('/api/login', async (req, res) => {
-  const user = {
-    username: req.body.username,
-    password: req.body.password
-  };
+
+  const username = req.body.username;
+  const password = req.body.password;
 
   try {
-    const object = await userCollection.find(user)
+    const object = await userCollection.findOne({ username: username })
     console.log(object);
-    if (object.length > 0) {
-      res.status(202).send({token: TOKEN_SECRET});
+
+    // If there is not a response object is null
+
+    if (object) {
+
+      const { hashedPassword, salt, iterations } = object;
+      const isPasswordMatch = await comparePassword(password, hashedPassword, salt, iterations);
+
+      if (isPasswordMatch) {
+        res.status(202).send(generateAccessToken(username));
+      } else {
+        res.status(400).send('Password does not match');
+      }
+      
     } else {
       res.status(400).send('User does not exist');
     }
