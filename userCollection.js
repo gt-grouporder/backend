@@ -31,5 +31,28 @@ const userSchema = new mongoose.Schema({
   }
 }, { collection: 'users' });
 
+const orderSchema = new mongoose.Schema({
+  items: [{ 
+    name: String, 
+    quantity: Number, 
+    price: Number
+   }],
+  totalPrice: { 
+    type: Number, 
+    required: true 
+  },
+  orderDate: { 
+    type: Date, 
+    default: Date.now
+   },
+  userIds: [{
+    type: mongoose.Types.ObjectId,
+    required: true
+  }]
+}, { collection: 'orders'} );
+
+
+const orderCollection = mongoose.model('Order', orderSchema);
 const userCollection = mongoose.model('UserCollection', userSchema);
-module.exports = userCollection;
+
+module.exports = { userCollection, orderCollection };

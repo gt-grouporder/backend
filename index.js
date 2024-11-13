@@ -5,7 +5,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
 const bodyParser = require('body-parser');
-const userCollection = require('./userCollection');
+const { userCollection, orderCollection } = require('./userCollection');
 const { ssha256, comparePassword } = require('./utils/hashing');
 
 const app = express();
@@ -96,7 +96,6 @@ app.post('/api/login', async (req, res) => {
 
   try {
     const object = await userCollection.findOne({ username: username })
-    console.log(object);
 
     // If there is not a response object is null
 
@@ -117,6 +116,38 @@ app.post('/api/login', async (req, res) => {
   } catch (error) {
     res.status(500).send('Internal server error');
   }
+});
+
+// API to save user's order to database
+app.post('/api/saveOrder', authenticateToken, async (req, res) => {
+
+  const orderData = req.body.orderCollection;
+
+  if (!orderData || !orderData.items || !orderData.totalPrice) {
+    return res.status(400).send('Order data is incomplete');
+  }
+
+  try {
+    const user = await userCollection.findOne({
+      "username": req.user.username
+    })
+    
+    console.log(user)
+    const newOrder = new orderCollection({
+      items: orderData.items,
+      totalPrice: orderData.totalPrice,
+      orderDate: orderData.orderDate || Date.now(),
+      userIds: [user._id]
+    });
+
+    await newOrder.save();
+    res.status(201).send('Order saved successfully');
+
+  } catch (error) {
+    console.error('Error saving order:', error);
+    res.status(500).send('Internal server error');
+  }
+
 });
 
 // Start the server
