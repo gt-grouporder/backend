@@ -128,6 +128,26 @@ app.post('/api/createOrder', authenticateToken, async (req, res) => {
   }
 });
 
+// API to fetch user's orders. Returns {ownedOrders, collabOrders}
+app.get('/api/fetchOrders', authenticateToken, async (req, res) => {
+  if (req.user == null) {
+    return res.status(401).send('Unauthorized');
+  }
+  try {
+    const user = await User.findById(req.user._id)
+      .populate('ownedOrders')
+      .populate('collabOrders');
+
+    res.status(200).json({
+      ownedOrders: user.ownedOrders,
+      collabOrders: user.collabOrders
+    });
+  } catch (error) {
+    console.error('Error fetching orders:', error);
+    res.status(500).send('Internal server error');
+  }
+});
+
 // API to save user's order to database
 app.post('/api/saveOrder', authenticateToken, async (req, res) => {
   const orderData = req.body.Order;
