@@ -37,11 +37,16 @@ function authenticateToken(req, res, next) {
 }
 
 // 5. DEFINE HELPER FUNCTIONS
+
 // Function to generate Access Token.
 // Expires in 30 minutes.
 function generateAccessToken(_id, username) {
   const user = { _id, username, role: 'user' };
   return jwt.sign(user, secret_token, { expiresIn: '1800s' });
+}
+
+function calculate_item_price(quantity, unitPrice) {
+  return quantity * unitPrice;
 }
 
 // 6. DEFINE ROUTES
@@ -249,6 +254,32 @@ app.delete('/api/removeCollaborator', authenticateToken, async (req, res) => {
     res.status(200).send('Collaborator removed successfully');
   } catch (error) {
     console.error('Error removing collaborator:', error);
+    res.status(500).send('Internal server error');
+  }
+});
+
+// API to add item to order. Item should be in the format {url, name, quantity, unitPrice}
+app.post('/api/addItem', authenticateToken, async (req, res) => {
+  const orderId = req.body.orderId;
+  const item = req.body.item;
+  if (!orderId || !item) {
+    return res.status(400).send('Order ID and item are required');
+  }
+  try {
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).send('Order not found');
+    }
+    if (!order.userIds.includes(req.user._id)) {
+      return res.status(403).send('Unauthorized');
+    }
+
+    order.items.push(item);
+    order.totalPrice += calculate_item_price(item.quantity, item.unitPrice);
+    await order.save();
+    res.status(200).send('Item added successfully');
+  } catch (error) {
+    console.error('Error adding item:', error);
     res.status(500).send('Internal server error');
   }
 });

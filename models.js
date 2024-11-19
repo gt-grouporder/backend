@@ -38,6 +38,26 @@ const userSchema = new mongoose.Schema({
   }
 }, { collection: 'users' });
 
+const itemSchema = new mongoose.Schema({
+  url: {
+    type: String,
+    required: true,
+    unique: true
+  },
+  name: {
+    type: String,
+    required: true
+  },
+  quantity: {
+    type: Number,
+    default: 1
+  },
+  unitPrice: {
+    type: Number,
+    required: true
+  }
+});
+
 // Define Order schema
 const orderSchema = new mongoose.Schema({
   userIds: {
@@ -52,24 +72,7 @@ const orderSchema = new mongoose.Schema({
     default: 'Untitled Order'
   },
   items: {
-    type: [{
-      url: {
-        type: String,
-        required: true
-      },
-      name: {
-        type: String,
-        required: true
-      },
-      quantity: {
-        type: Number,
-        default: 1
-      },
-      unitPrice: {
-        type: Number,
-        required: true
-      }
-    }],
+    type: [itemSchema],
     default: []
   },
   totalPrice: {
