@@ -39,8 +39,8 @@ function authenticateToken(req, res, next) {
 // 5. DEFINE HELPER FUNCTIONS
 // Function to generate Access Token.
 // Expires in 30 minutes.
-function generateAccessToken(username) {
-  const user = { username, role: 'user' };
+function generateAccessToken(_id, username) {
+  const user = { _id, username, role: 'user' };
   return jwt.sign(user, secret_token, { expiresIn: '1800s' });
 }
 
@@ -94,11 +94,11 @@ app.post('/api/login', async (req, res) => {
     const object = await User.findOne({ username: username })
     // If there is not a response object is null
     if (object) {
-      const { hashedPassword, salt, iterations } = object;
+      const { _id, hashedPassword, salt, iterations } = object;
       const isPasswordMatch = await comparePassword(password, hashedPassword, salt, iterations);
 
       if (isPasswordMatch) {
-        res.status(202).send(generateAccessToken(username));
+        res.status(202).send(generateAccessToken(_id, username));
       } else {
         res.status(400).send('Password does not match');
       }
@@ -106,6 +106,24 @@ app.post('/api/login', async (req, res) => {
       res.status(400).send('User does not exist');
     }
   } catch (error) {
+    res.status(500).send('Internal server error');
+  }
+});
+
+// API to create an empty order
+app.post('/api/createOrder', authenticateToken, async (req, res) => {
+  if (req.user == null) {
+    return res.status(401).send('Unauthorized');
+  }
+  try {
+    console.log(req.user);
+    const order = await Order.create({
+      userIds: [req.user._id],
+      title: req.body.title
+    });
+    res.status(201).send(order._id);
+  } catch (error) {
+    console.error('Error creating order:', error);
     res.status(500).send('Internal server error');
   }
 });
