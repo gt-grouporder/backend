@@ -13,48 +13,70 @@ mongoose.connect(uri)
 
 // Define User schema
 const userSchema = new mongoose.Schema({
-  username:{
+  username: {
     type: String,
     required: true,
     unique: true
   },
-  hashedPassword:{
+  hashedPassword: {
     type: String,
     required: true
   },
-  salt:{
+  salt: {
     type: String,
     required: true
   },
-  iterations:{
+  iterations: {
     type: Number,
     required: true
   },
-  ownedOrders:[{
+  ownedOrders: {
+    type: [{
       type: mongoose.Types.ObjectId,
-      default: []
-  }],
-  collabOrders:[{
+      ref: 'Order'
+    }],
+    default: []
+  },
+  collabOrders: {
+    type: [{
       type: mongoose.Types.ObjectId,
-      default: []
-  }]
+      ref: 'Order'
+    }],
+    default: []
+  }
 }, { collection: 'users' });
-
-const User = new mongoose.model('User', userSchema);
 
 // Define Order schema
 const orderSchema = new mongoose.Schema({
-  userIds: [{
-    type: mongoose.Types.ObjectId,
+  userIds: {
+    type: [{
+      type: mongoose.Types.ObjectId,
+      ref: 'User'
+    }],
     required: true
-  }],
-  items: [{ 
-    url: String,
-    name: String,
-    quantity: Number,
-    unitPrice: Number
-   }],
-  totalPrice: { 
+  },
+  items: {
+    type: [{
+      url: {
+        type: String,
+        required: true
+      },
+      name: {
+        type: String,
+        required: true
+      },
+      quantity: {
+        type: Number,
+        default: 1
+      },
+      unitPrice: {
+        type: Number,
+        required: true
+      }
+    }],
+    default: []
+  },
+  totalPrice: {
     type: Number,
     default: 0,
   },
@@ -64,6 +86,8 @@ const orderSchema = new mongoose.Schema({
   }
 }, { collection: 'orders'} );
 
+// Create models
+const User = new mongoose.model('User', userSchema);
 const Order = new mongoose.model('Order', orderSchema);
 
 module.exports = { User, Order };
