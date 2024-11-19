@@ -306,7 +306,7 @@ app.delete('/api/deleteItem', authenticateToken, async (req, res) => {
       return res.status(404).send('Item not found in the order');
     }
     const item = order.items[itemIndex];
-    
+
     // Remove the item with the specified itemId
     order.totalPrice -= calculate_item_price(item.quantity, item.unitPrice);
     order.items.splice(itemIndex, 1);
@@ -314,29 +314,6 @@ app.delete('/api/deleteItem', authenticateToken, async (req, res) => {
     res.status(200).send('Item removed successfully');
   } catch (error) {
     console.error('Error removing item:', error);
-    res.status(500).send('Internal server error');
-  }
-});
-
-// API to save user's order to database
-app.post('/api/saveOrder', authenticateToken, async (req, res) => {
-  const orderData = req.body.Order;
-  if (!orderData || !orderData.items || (!orderData.totalPrice && orderData.totalPrice !== 0)) {
-    return res.status(400).send('Order data is incomplete');
-  }
-  try {
-    const user = await User.findOne({
-      "username": req.user.username
-    })
-    await Order.create({
-      items: orderData.items,
-      totalPrice: orderData.totalPrice,
-      orderDate: orderData.orderDate,
-      userIds: [user._id]
-    });
-    res.status(201).send('Order saved successfully');
-  } catch (error) {
-    console.error('Error saving order:', error);
     res.status(500).send('Internal server error');
   }
 });
