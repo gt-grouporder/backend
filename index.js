@@ -284,6 +284,40 @@ app.post('/api/addItem', authenticateToken, async (req, res) => {
   }
 });
 
+// API to remove item from order.
+app.delete('/api/deleteItem', authenticateToken, async (req, res) => {
+  const orderId = req.body.orderId;
+  const itemId = req.body.itemId;
+  if (!orderId || !itemId) {
+    return res.status(400).send('Order and item ID are required');
+  }
+  try {
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).send('Order not found');
+    }
+    if (!order.userIds.includes(req.user._id)) {
+      return res.status(403).send('Unauthorized');
+    }
+
+    // Check if the item exists in the order
+    const itemIndex = order.items.findIndex(item => item._id.toString() === itemId);
+    if (itemIndex === -1) {
+      return res.status(404).send('Item not found in the order');
+    }
+    const item = order.items[itemIndex];
+    
+    // Remove the item with the specified itemId
+    order.totalPrice -= calculate_item_price(item.quantity, item.unitPrice);
+    order.items.splice(itemIndex, 1);
+    await order.save();
+    res.status(200).send('Item removed successfully');
+  } catch (error) {
+    console.error('Error removing item:', error);
+    res.status(500).send('Internal server error');
+  }
+});
+
 // API to save user's order to database
 app.post('/api/saveOrder', authenticateToken, async (req, res) => {
   const orderData = req.body.Order;
