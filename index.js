@@ -15,6 +15,14 @@ dotenv.config();
 const secret_token = process.env.TOKEN_SECRET;
 const port = process.env.PORT || 3000;
 
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Credentials', true);
+  next()
+})
+
 // 3. INITIALIZE MIDDLEWARE
 // Middleware to parse JSON
 app.use(express.json());
