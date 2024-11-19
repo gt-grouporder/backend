@@ -10,7 +10,6 @@ const uri = process.env.MONGODB_URI;
 mongoose.connect(uri)
   .catch(err => console.error(err));
 
-
 // Define User schema
 const userSchema = new mongoose.Schema({
   username: {
@@ -30,14 +29,7 @@ const userSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
-  ownedOrders: {
-    type: [{
-      type: mongoose.Types.ObjectId,
-      ref: 'Order'
-    }],
-    default: []
-  },
-  collabOrders: {
+  orders: {
     type: [{
       type: mongoose.Types.ObjectId,
       ref: 'Order'
@@ -83,6 +75,10 @@ const orderSchema = new mongoose.Schema({
   totalPrice: {
     type: Number,
     default: 0,
+  },
+  complete: {
+    type: Boolean,
+    default: false
   },
   createdDate: {
     type: Date,

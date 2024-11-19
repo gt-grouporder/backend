@@ -116,11 +116,17 @@ app.post('/api/createOrder', authenticateToken, async (req, res) => {
     return res.status(401).send('Unauthorized');
   }
   try {
-    console.log(req.user);
+    // Create order
     const order = await Order.create({
       userIds: [req.user._id],
       title: req.body.title
     });
+
+    // Add order to user's list of orders
+    const user = await User.findById(req.user._id);
+    user.orders.push(order._id);
+    await user.save();
+
     res.status(201).send(order._id);
   } catch (error) {
     console.error('Error creating order:', error);
@@ -135,15 +141,42 @@ app.get('/api/fetchOrders', authenticateToken, async (req, res) => {
   }
   try {
     const user = await User.findById(req.user._id)
-      .populate('ownedOrders')
-      .populate('collabOrders');
+      .populate('orders')
 
     res.status(200).json({
-      ownedOrders: user.ownedOrders,
-      collabOrders: user.collabOrders
+      orders: user.orders
     });
   } catch (error) {
     console.error('Error fetching orders:', error);
+    res.status(500).send('Internal server error');
+  }
+});
+
+// API to delete user's order. Use order ID
+app.delete('/api/deleteOrder', authenticateToken, async (req, res) => {
+  const orderId = req.body.orderId;
+  if (!orderId) {
+    return res.status(400).send('Order ID or name is required');
+  }
+  try {
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).send('Order not found');
+    }
+    if (!order.userIds.includes(req.user._id)) {
+      return res.status(403).send('Unauthorized');
+    }
+
+    // Remove order from user's list of orders
+    const user = await User.findById(req.user._id);
+    user.orders.pull(orderId);
+    await user.save();
+
+    // Delete order from database
+    await Order.findByIdAndDelete(orderId);
+    res.status(200).send('Order deleted successfully');
+  } catch (error) {
+    console.error('Error deleting order:', error);
     res.status(500).send('Internal server error');
   }
 });
