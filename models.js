@@ -55,6 +55,10 @@ const orderSchema = new mongoose.Schema({
     }],
     required: true
   },
+  title: {
+    type: String,
+    default: 'Untitled Order'
+  },
   items: {
     type: [{
       url: {
