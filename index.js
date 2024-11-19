@@ -5,7 +5,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
 const bodyParser = require('body-parser');
-const { User, Order } = require('./models');
+const { userCollection, orderCollection } = require('./userCollection');
 const { ssha256, comparePassword } = require('./utils/hashing');
 
 const app = express();
@@ -30,6 +30,7 @@ function authenticateToken(req, res, next) {
   if (token == null) return res.sendStatus(401);
 
   jwt.verify(token, secret_token, (err, user) => {
+    console.log(err);
     if (err) return res.sendStatus(403);
     req.user = user;
     next();
@@ -70,13 +71,15 @@ app.get('/api/userOrder', authenticateToken, (req, res) => {
 // API to input user data into the database
 app.post('/api/signup', async (req, res) => {
   const { hash, salt, iterations } = ssha256(req.body.password);
+  const user = {
+    username: req.body.username,
+    hashedPassword: hash,
+    salt: salt,
+    iterations: iterations
+  };
+
   try {
-    await User.create({
-      username: req.body.username,
-      hashedPassword: hash,
-      salt: salt,
-      iterations: iterations
-    });
+    await userCollection.insertMany([user]);
     res.status(201).send('User created successfully');
   } catch (error) {
     if (error.code === 11000) {
@@ -87,13 +90,17 @@ app.post('/api/signup', async (req, res) => {
 
 // API to look for user data in the database
 app.post('/api/login', async (req, res) => {
+
   const username = req.body.username;
   const password = req.body.password;
 
   try {
-    const object = await User.findOne({ username: username })
+    const object = await userCollection.findOne({ username: username })
+
     // If there is not a response object is null
+
     if (object) {
+
       const { hashedPassword, salt, iterations } = object;
       const isPasswordMatch = await comparePassword(password, hashedPassword, salt, iterations);
 
@@ -102,6 +109,7 @@ app.post('/api/login', async (req, res) => {
       } else {
         res.status(400).send('Password does not match');
       }
+      
     } else {
       res.status(400).send('User does not exist');
     }
@@ -112,25 +120,34 @@ app.post('/api/login', async (req, res) => {
 
 // API to save user's order to database
 app.post('/api/saveOrder', authenticateToken, async (req, res) => {
-  const orderData = req.body.Order;
-  if (!orderData || !orderData.items || (!orderData.totalPrice && orderData.totalPrice !== 0)) {
+
+  const orderData = req.body.orderCollection;
+
+  if (!orderData || !orderData.items || !orderData.totalPrice) {
     return res.status(400).send('Order data is incomplete');
   }
+
   try {
-    const user = await User.findOne({
+    const user = await userCollection.findOne({
       "username": req.user.username
     })
-    await Order.create({
+    
+    console.log(user)
+    const newOrder = new orderCollection({
       items: orderData.items,
       totalPrice: orderData.totalPrice,
-      orderDate: orderData.orderDate,
+      orderDate: orderData.orderDate || Date.now(),
       userIds: [user._id]
     });
+
+    await newOrder.save();
     res.status(201).send('Order saved successfully');
+
   } catch (error) {
     console.error('Error saving order:', error);
     res.status(500).send('Internal server error');
   }
+
 });
 
 // Start the server
